@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Page</title>
+    <link rel="stylesheet" href="static\css\style.css">
+</head>
+
+<body>
+    <div class="animation-container">
+        <img class="bg" src="/static/turf-bg.jpg" alt="Background Image">
+        <div class="football-wrapper">
+            <div class="football"></div>
+        </div>
+    </div>
+
+    <div class="squad-up"> 
+        <h1>SQUAD UP!!</h1>
+    </div>
+
+    <script src="static\js\script.js">
+        setTimeout(() => {
+    // Notify the server that the animation has been seen
+    fetch('/set_animation_seen', { method: 'POST' });
+
+    // Redirect to index.html after animation
+    window.location.href = '/index';
+}, 4500);
+    </script>
+</body>
+</html>

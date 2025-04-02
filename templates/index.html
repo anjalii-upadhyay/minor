@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Community</title>
+    <link rel="stylesheet" href="static\css\style.css">
+</head>
+
+<body>
+    
+    <img class="bg" src="/static/turf-bg.jpg" alt="Background Image">
+
+    <!-- ----------Navigation Bar---------- -->
+
+    <header class="navbar">
+        <div class="container">
+
+            <div class="logo">
+                <h1 class="logo-1"><img src="/static/squadUp-logo.png" alt="Squad Up Logo"></h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li>
+                    <a href="#">Services ▾</a>
+                    <ul class= dropdown>
+                        <li><a href="{{ url_for('login') }}">Turf Booking</a></li>
+                        <li><a href="flat.html">Join Community</a></li>
+                        <li><a href="flat.html">Create Community</a></li>
+                    </ul>
+                    </li>
+                    <li><a href="aboutUs.html">About Us</a></li>
+                    <li><a href="{{ url_for('login') }}">Login / Sign Up</a></li>
+                </ul>
+            </nav>
+        </div>
+        <hr>
+    </header>
+
+    <!-- ------------- Parallax Scrolling ------------- -->
+
+    <div class="containerParallax">
+        <!-- Left side for parallax text -->
+        <div class="left-text">
+            <section class="face front">
+                <h1>Welcome to the Sports Arena</h1><br></br>
+                <p>Explore exciting sports moments and captivating visuals.</p>
+            </section>
+            <section class="face top">
+                <h1>Dynamic Action</h1><br></br>
+                <p>Catch every move, every play, and every victory.</p>
+            </section>
+            <section class="face back">
+                <h1>Unleashing Talent</h1><br></br>
+                <p>Be part of the community that celebrates athletes.</p>
+            </section>
+            <section class="face bottom">
+                <h1>Squad Up!!</h1><br></br>
+                <p>tagline</p>
+            </section>
+        </div>
+
+        <!-- Right side for parallax collage -->
+        <div class="right-parallax">
+            <img src="/static/1.png" alt="Image 1" class="image image1">
+            <img src="/static/3.png" alt="Image 2" class="image image2">
+        
+            <div class="search">
+                <input type="text" placeholder="Search">
+                <button>Go</button>
+            </div>
+        
+            <img src="/static/4.png" alt="Image 3" class="image image3">
+            <img src="/static/5.png" alt="Image 4" class="image image4">
+        </div>        
+    </div>
+
+<!-- ---------------------- Find Turf --------------------------- -->
+
+    <div class="find-turf">
+        <h1>Find Turfs Near You</h1>
+        <div class="scrollable-wrapper">
+            <button class="arrow left-arrow" disabled>&lt;</button> <!-- Left Arrow -->
+            <div class="turfs">
+                <div class="turf1">1</div>
+                <div class="turf2">2</div>
+                <div class="turf3">3</div>
+                <div class="turf4">4</div>
+                <div class="turf5">5</div>
+                <div class="turf6">6</div>
+                <div class="turf7">7</div>
+            </div>
+            <button class="arrow right-arrow">&gt;</button> <!-- Right Arrow -->
+        </div>
+    </div>
+    
+    <script src="static\js\main.js"></script>
+</body>
+</html>

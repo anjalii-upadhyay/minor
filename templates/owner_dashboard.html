@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard</title>
+    <style>
+        /* Basic Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #060606;
+            color: #333;
+            padding: 20px;
+        }
+
+        /* Header */
+        h1 {
+            font-size: 36px;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 28px;
+            color: #ffffff;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: #4CAF50;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        /* Turfs List */
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            padding: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        li:hover {
+            transform: translateY(-5px);
+        }
+
+        strong {
+            font-size: 20px;
+            color: #4CAF50;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Debugging Section */
+        pre {
+            background-color: #e0e0e0;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* Empty State */
+        p {
+            font-size: 18px;
+            color: #888;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to your Owner Dashboard</h1>
+    <nav>
+        <a href="{{ url_for('owner_dashboard') }}">Dashboard</a> |
+        <a href="{{ url_for('add_turf') }}">Add Turf</a> |
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </nav>
+
+    <h2>Your Turfs</h2>
+
+
+
+    {% if turfs %}
+        <ul>
+            {% for turf in turfs %}
+            <li>
+                <strong>{{ turf.name }}</strong><br>
+                Location: {{ turf.location }}<br>
+                Price per Hour: ${{ turf.price_per_hour }}<br>
+                Description: {{ turf.description }}<br>
+                <a href="{{ url_for('turf_details', turf_id=turf.id) }}" class="btn btn-primary">View Details</a>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No turfs found.</p>
+    {% endif %}
+</body>
+</html>
