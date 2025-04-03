@@ -2,14 +2,31 @@
 let currentFaceIndex = 0;
 const faces = ["front", "bottom", "back", "top"];
 const textContainer = document.querySelector(".left-text");
+const images = document.querySelectorAll(".image");
 let rotationInProgress = false;
 let firstCycleCompleted = false;
+
+document.body.style.overflowY = "hidden";
+
+function updateImages(faceIndex) {
+    images.forEach((img) => {
+        img.classList.remove("pulsate");
+    });
+
+    const imageToShow = images[faceIndex];
+    if (imageToShow) {
+        imageToShow.classList.add("in-view");
+
+        if (firstCycleCompleted) {
+            imageToShow.classList.add("pulsate");
+        }
+    }
+}
 
 window.addEventListener("wheel", (event) => {
     if (rotationInProgress) return;
 
-    rotationInProgress = true;
-
+    rotationInProgress = true; 
     if (event.deltaY > 0) {
         // Scroll down - Move to the next face
         currentFaceIndex = (currentFaceIndex + 1) % faces.length;
@@ -19,25 +36,25 @@ window.addEventListener("wheel", (event) => {
     }
 
     const newAngle = -currentFaceIndex * 90;
-
     textContainer.style.transform = `rotateX(${newAngle}deg)`;
 
-    // Check if the first cycle is complete
+    updateImages(currentFaceIndex);
+
     if (currentFaceIndex === 0) {
         firstCycleCompleted = true;
+        document.body.style.overflowY = "auto"; // Unlock scroll after first rotation
     }
 
+    // Unlock rotation after transition completes
     setTimeout(() => {
         rotationInProgress = false;
-
-        // If the first cycle is complete, allow main page scrolling
-        if (firstCycleCompleted) {
-            document.body.style.overflowY = "auto";
-        }
-    }, 1000);
+    }, 1000); 
 });
-document.body.style.overflowY = "hidden";
 
+window.addEventListener("DOMContentLoaded", () => {
+    const image1 = document.querySelector(".image1");
+    image1.classList.add("in-view");
+});
 
 // ------------------------ Find Turfs ------------------------------
 document.addEventListener("DOMContentLoaded", () => {
