@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, Blueprint
+import sqlite3
+import random
+import traceback
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-from models import db, User, Turf, Slot  # Import models from models.py
+from flask_migrate import Migrate
 from functools import wraps
-from flask import session, redirect, url_for, flash
-
+from datetime import datetime
+from models import db, User, Turf, Slot, Community, JoinRequest
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -12,7 +14,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///turf_booking.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)  # Initialize the database with the app
+migrate = Migrate(app, db)
 
+community_bp = Blueprint('community', __name__)
 
 # Helper Function to Check if User is Logged In
 def is_logged_in():
@@ -77,24 +81,26 @@ def register():
     return render_template('register.html')
 
 
+# Route to Login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        user = User.query.filter_by(email=email).first()
 
-        user = User.query.filter_by(email=email, password=password).first()
-        if user:
+        if user and user.password == password:
             session['user_id'] = user.id
             session['is_owner'] = user.is_owner
-            flash('Login successful!', 'success')
-            return redirect(url_for('owner_dashboard' if user.is_owner else 'player_dashboard'))
-        else:
-            flash('Invalid credentials!', 'danger')
-            return redirect(url_for('login'))
+            flash("Logged in successfully!", "success")
+            return redirect(url_for('player_dashboard'))  # Always go to dashboard
+
+        flash("Invalid email or password.", "warning")
+
     return render_template('login.html')
 
 
+# Route to Logout
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
@@ -105,8 +111,9 @@ def logout():
 
 # Owner Dashboard
 @app.route('/owner/dashboard')
+@login_required
 def owner_dashboard():
-    if not is_logged_in() or not session.get('is_owner'):
+    if not session.get('is_owner'):
         flash('Unauthorized access!', 'danger')
         return redirect(url_for('login'))
 
@@ -119,8 +126,9 @@ def owner_dashboard():
 
 
 @app.route('/owner/add_turf', methods=['GET', 'POST'])
+@login_required
 def add_turf():
-    if not is_logged_in() or not session.get('is_owner'):
+    if not session.get('is_owner'):
         flash('Unauthorized access!', 'danger')
         return redirect(url_for('login'))
 
@@ -178,19 +186,6 @@ def turf_details(turf_id):
         return redirect(url_for('turf_details', turf_id=turf_id))
 
     return render_template('turf_details.html', turf=turf, slots=slots)
-
-
-
-# Player Dashboard
-@app.route('/player/dashboard')
-def player_dashboard():
-    if not is_logged_in() or session.get('is_owner'):
-        flash('Unauthorized access!', 'danger')
-        return redirect(url_for('login'))
-
-    turfs = Turf.query.all()
-    return render_template('player_dashboard.html', turfs=turfs)
-
 
 
 #book turf route
@@ -264,8 +259,7 @@ def booking_confirmation():
     return render_template('booking_confirmation.html', confirmation=confirmation)
 
 
-    #update slot status
-    
+#update slot status    
 def update_slot_status(slot_id, is_booked, player_id=None):
     slot = Slot.query.get(slot_id)
     if slot:
@@ -274,9 +268,131 @@ def update_slot_status(slot_id, is_booked, player_id=None):
         db.session.commit()
 
 
+# # Team name generator (Adjective + Noun)
+# def generate_readable_team_name():
+#     adjectives = [
+#         'Fierce', 'Mighty', 'Silent', 'Swift', 'Wild',
+#         'Fearless', 'Dark', 'Thunder', 'Bold', 'Epic'
+#     ]
+#     nouns = [
+#         'Falcons', 'Strikers', 'Wolves', 'Warriors', 'Tigers',
+#         'Panthers', 'Dragons', 'Sharks', 'Knights', 'Raiders'
+#     ]
+#     return f"{random.choice(adjectives)} {random.choice(nouns)}"
+
+
+# Route to create a community
+@app.route('/create_community', methods=['POST'])
+def create_community():
+    data = request.get_json()
+
+    # Extract fields from the incoming request
+    team_name = data.get('team_name', '')  # Optional input
+    sport = data.get('sport')
+    max_players = int(data.get('max_players', 12))
+    turf_id = int(data.get('turf_id'))
+    owner_id = int(data.get('owner_id'))
+    status = data.get('status', 'active')
+
+    try:
+        # Auto-generate team name if not provided
+        if not team_name:
+            team_name = f"Team_{owner_id}_{sport}"
+
+        new_community = Community(
+            team_name=team_name,
+            sport=sport,
+            max_players=max_players,
+            turf_id=turf_id,
+            owner_id=owner_id,
+            status=status
+        )
+
+        db.session.add(new_community)
+        db.session.commit()
+
+        return jsonify({'message': 'Community created successfully!', 'team_name': new_community.team_name}), 201
+
+    except Exception as e:
+        print("Error occurred during community creation:")
+        print(traceback.format_exc()) 
+        return jsonify({'error': str(e)}), 500
+    
+
+# Route for Joining Community
+@app.route('/join-community')
+def join_community():
+    communities = Community.query.all()  
+    return render_template('join_community.html', communities=communities)
+
+
+# Route for sending request to join community
+@app.route('/send-join-request', methods=['POST'])
+def send_join_request():
+    user_id = session.get('user_id')
+    if not user_id:
+        print("User not logged in. Redirecting to login.")
+        session['page_last_visited_url'] = request.referrer or url_for('join_community')
+        return redirect(url_for('login'))
+
+    community_id = request.form.get('community_id')
+    print(f"Community ID received: {community_id}")
+    existing_request = JoinRequest.query.filter_by(user_id=user_id, community_id=community_id).first()
+
+    if existing_request:
+        flash("You have already sent a request to this community.", "warning")
+    else:
+        new_request = JoinRequest(user_id=user_id, community_id=community_id, status='pending')
+        db.session.add(new_request)
+        db.session.commit()
+        flash("Join request sent successfully!", "success")
+
+    return redirect(url_for('join_community'))
+
+
+# Route to fetch the list of communities
+@app.route('/get_communities', methods=['GET'])
+def get_communities():
+    try:
+        # Query all communities from the database
+        communities = Community.query.all()
+
+        # Convert the list of communities to a list of dictionaries
+        community_list = [{
+            'id': community.id,
+            'team_name': community.team_name,
+            'sport': community.sport,
+            'max_players': community.max_players,
+            'status': community.status
+        } for community in communities]
+
+        return jsonify(community_list), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Store Last Visited Webpage
+@app.before_request
+def page_last_visited():
+    excluded_routes = ['login', 'logout', 'static', 'register']
+    if request.endpoint not in excluded_routes and request.method == 'GET':
+        session['page_last_visited_url'] = request.path
+
+
+@app.route('/player/dashboard')
+def player_dashboard():
+    if 'user_id' not in session:
+        flash("Please login first.", "info")
+        return redirect(url_for('login'))
+
+    turfs = Turf.query.all()  # Fetch all turfs from DB
+    return render_template('player_dashboard.html', turfs=turfs)
+
+
 # Database creation logic
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()  # Create all tables in the database
         print("Database and tables created successfully!")
+    print(app.url_map)
     app.run(debug=True)
