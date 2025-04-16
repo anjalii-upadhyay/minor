@@ -4,48 +4,152 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Body Styling */
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #000000;
-            color: #333;
-            margin: 20px;
+            background-color: #1c1c1c;
+            color: #ffffff;
+            margin: 0;
             padding: 0;
         }
 
-        /* Header Styling */
-        h1 {
-            font-size: 36px;
-            color: #ffffff;
-            margin-bottom: 20px;
+        .header {
+            background-color: rgba(56, 142, 60, 0.598);
+            color: white;
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 96vw;
+            z-index: 1000;
+            height: 40px;
+            backdrop-filter: blur(8px);
         }
 
-        /* Navigation Styling */
-        nav {
-            background-color: #4CAF50;
-            padding: 10px;
+        .header .logo .squadUp-logo{
+            width: 70%;
+        }
+
+        .header .search-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            margin-left: -20%;
+        }
+
+        .header input[type="text"] {
+            padding: 8px;
+            width: 40%;
             border-radius: 5px;
-            margin-bottom: 20px;
+            border: none;
         }
 
-        nav a {
+        .header .icons {
+            display: flex;
+            align-items: center;
+            justify-content: left;
+            gap: 15px;
+            margin-left: -20%;
+        }
+
+        .icon-button {
+            background-color: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 30px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2e7d32;
+            color: white;
+            height: calc(100vh - 60px);
+            padding: 20px;
+            box-sizing: border-box;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 60px;
+        }
+
+        .sidebar h2 {
+            color: #fff;
+            font-size: 22px;
+            margin-bottom: 30px;
+            transition: opacity 0.3s ease;
+        }
+
+        .sidebar.collapsed h2 {
+            opacity: 0;
+        }
+
+        .sidebar a {
+            display: block;
             color: white;
             text-decoration: none;
-            margin: 0 15px;
+            padding: 12px;
             font-size: 16px;
-            font-weight: bold;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
-        nav a:hover {
-            text-decoration: underline;
+        .sidebar.collapsed a {
+            font-size: 0;
+            padding: 12px 8px;
         }
 
-        /* Turfs List Styling */
-        h2 {
-            font-size: 28px;
-            color: hsl(0, 0%, 100%);
-            margin-top: 30px;
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .toggle-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .main {
+            margin-left: 250px;
+            padding-top: 60px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main.collapsed {
+            margin-left: 60px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        h1 {
+            color: #a5d6a7;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #b2f2bb;
             margin-bottom: 15px;
         }
 
@@ -55,21 +159,18 @@
         }
 
         li {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #2b2b2b;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
             margin-bottom: 15px;
             padding: 20px;
-            transition: transform 0.3s ease;
-        }
-
-        li:hover {
-            transform: translateY(-5px);
+            color: #e0f2f1;
+            border-left: 5px solid #81c784;
         }
 
         strong {
             font-size: 20px;
-            color: #4CAF50;
+            color: #aed581;
         }
 
         a.btn {
@@ -80,44 +181,84 @@
             text-decoration: none;
             border-radius: 5px;
             font-size: 16px;
-            transition: background-color 0.3s ease;
         }
 
         a.btn:hover {
             background-color: #0056b3;
         }
-
-        /* Empty State Styling */
-        p {
-            font-size: 18px;
-            color: #888;
-            font-style: italic;
-        }
     </style>
 </head>
 <body>
-    <h1>Welcome to your Player Dashboard</h1>
-    <nav>
-        <a href="{{ url_for('player_dashboard') }}">Dashboard</a> |
-        <a href="{{ url_for('join_community') }}">Join Community</a> |
+    <div class="header">
+        <div class="logo"><img class="squadUp-logo" src="/static/squadUp-logo.png" alt="Squad Up Logo"></div>
+        <div class="search-container">
+            <input type="text" placeholder="Search...">
+        </div>
+        <div class="icons">
+            <button class="icon-button" title="Filters"><i class="fas fa-filter"></i></button>
+            <button class="icon-button" title="Profile"><i class="fas fa-user-circle"></i></button>
+        </div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <button class="toggle-button" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+        <h2>Sports Portal</h2>
+        <a href="{{ url_for('player_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('join_community') }}">Join Community</a>
+        <a href="#">History</a>
+        <a href="#">Notifications</a>
+        <a href="#">Messages</a>
+        <a href="#">Favourites</a>
+        <a href="#">Help & Support</a>
         <a href="{{ url_for('logout') }}">Logout</a>
-    </nav>
+    </div>
 
-    <h2>Available Turfs</h2>
+    <div class="main" id="main">
+        <div class="content">
+            <h1>Welcome to your Player Dashboard</h1>
 
-    <ul>
-        {% for turf in turfs %}
-        <li>
-            <strong>{{ turf.name }}</strong><br>
-            Location: {{ turf.location }}<br>
-            Price per Hour: ${{ turf.price_per_hour }}<br>
-            <a href="{{ url_for('book_turf', turf_id=turf.id) }}" class="btn">Book this Turf</a>
-        </li>
-        {% endfor %}
-    </ul>
+            <div class="section">
+                <h2>Available Turfs</h2>
+                <ul>
+                    {% for turf in turfs %}
+                    <li>
+                        <strong>{{ turf.name }}</strong><br>
+                        Location: {{ turf.location }}<br>
+                        Price per Hour: ${{ turf.price_per_hour }}<br>
+                        <a href="{{ url_for('book_turf', turf_id=turf.id) }}" class="btn">Book this Turf</a>
+                    </li>
+                    {% endfor %}
+                </ul>
 
-    {% if turfs|length == 0 %}
-    <p>No turfs available right now. Please check back later.</p>
-    {% endif %}
+                {% if turfs|length == 0 %}
+                <p>No turfs available right now. Please check back later.</p>
+                {% endif %}
+            </div>
+
+            <div class="section">
+                <h2>Available Communities</h2>
+                <!-- Placeholder for communities listing -->
+            </div>
+
+            <div class="section">
+                <h2>Closest to You</h2>
+                <!-- Placeholder for location-based recommendations -->
+            </div>
+
+            <div class="section">
+                <h2>Based on Your Recent Activity</h2>
+                <!-- Placeholder for recent activity-based recommendations -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const main = document.getElementById('main');
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('collapsed');
+        }
+    </script>
 </body>
 </html>
