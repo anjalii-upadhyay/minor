@@ -284,7 +284,6 @@ def create_community():
         print("Error occurred during community creation:")
         print(traceback.format_exc()) 
         return jsonify({'error': str(e)}), 500
-
     
 
 # Route for Joining Community

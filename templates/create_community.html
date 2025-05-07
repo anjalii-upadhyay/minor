@@ -16,27 +16,62 @@
 
     <div class="create-community-container">
         <h2>Create a Community</h2>
-        <form action="/community/create_community" method="POST">
+        <form id="createCommunityForm">
             <label for="team_name">Team Name</label>
             <input type="text" id="team_name" name="team_name">
-
+        
             <label for="sport">Sport</label>
             <input type="text" id="sport" name="sport" required>
-
+        
             <label for="max_players">Max Players</label>
             <input type="number" id="max_players" name="max_players" value="11">
-
+        
             <label for="turf_id">Turf ID</label>
             <input type="number" id="turf_id" name="turf_id" required>
-
-            <label for="owner_id">Owner ID</label>
-            <input type="number" id="owner_id" name="owner_id" value="{{ owner_id }}" readonly />
-
+        
             <label for="status">Status</label>
             <input type="text" id="status" name="status" value="active">
-
+        
             <button type="submit">Create Community</button>
         </form>
     </div>
+
+    <script>
+
+console.log("Script loaded"); // Add at the top of your <script>
+
+
+        document.getElementById('createCommunityForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+        
+            const formData = {
+                team_name: document.getElementById('team_name').value,
+                sport: document.getElementById('sport').value,
+                max_players: document.getElementById('max_players').value,
+                turf_id: document.getElementById('turf_id').value,
+                status: document.getElementById('status').value,
+            };
+        
+            try {
+                const response = await fetch('/create_community', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+        
+                const result = await response.json();
+                if (response.ok) {
+                    alert(result.message);
+                } else {
+                    alert(result.error || 'Something went wrong');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to create community');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -250,25 +250,6 @@
                 <h2>Based on Your Recent Activity</h2>
                 <!-- Placeholder for recent activity-based recommendations -->
             </div>
-
-            <div class="section">
-                <h2>My Communities</h2>
-                <ul>
-                    {% for community in my_communities %}
-                    <li>
-                        <strong>{{ community.name }}</strong><br>
-                        Sport: {{ community.sport }}<br>
-                        Members: {{ community.members_count }}<br>
-                        Turf: {{ community.turf_name }}<br>
-                        <a href="{{ url_for('view_community', community_id=community.id) }}" class="btn">View Details</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            
-                {% if my_communities|length == 0 %}
-                <p>You haven't created any communities yet. <a href="{{ url_for('create_community') }}" class="btn">Create One</a></p>
-                {% endif %}
-            </div>
             
         </div>
     </div>
