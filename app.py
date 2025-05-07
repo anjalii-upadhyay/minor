@@ -188,30 +188,6 @@ def turf_details(turf_id):
     return render_template('turf_details.html', turf=turf, slots=slots)
 
 
-#book turf route
-
-# @app.route('/player/book/<int:turf_id>', methods=['GET', 'POST'])
-# def book_turf(turf_id):
-#     if not is_logged_in() or session.get('is_owner'):
-#         flash('Unauthorized access!', 'danger')
-#         return redirect(url_for('login'))
-
-#     turf = Turf.query.get_or_404(turf_id)
-#     slots = Slot.query.filter_by(turf_id=turf_id, is_booked=False).order_by(Slot.start_time).all()
-
-#     if request.method == 'POST':
-#         selected_slots = request.form.getlist('slot_ids')  # Get selected slot IDs
-#         for slot_id in selected_slots:
-#             slot = Slot.query.get(slot_id)
-#             if slot and not slot.is_booked:
-#                 slot.is_booked = True
-#                 slot.player_id = session['user_id']  # Link slot to the player
-#         db.session.commit()
-#         flash('Turf slots booked successfully!', 'success')
-#         return redirect(url_for('player_dashboard'))
-
-#     return render_template('book_turf.html', turf=turf, slots=slots)
-
 @app.route('/player/book/<int:turf_id>', methods=['GET', 'POST'])
 def book_turf(turf_id):
     if not is_logged_in() or session.get('is_owner'):
@@ -268,19 +244,6 @@ def update_slot_status(slot_id, is_booked, player_id=None):
         db.session.commit()
 
 
-# # Team name generator (Adjective + Noun)
-# def generate_readable_team_name():
-#     adjectives = [
-#         'Fierce', 'Mighty', 'Silent', 'Swift', 'Wild',
-#         'Fearless', 'Dark', 'Thunder', 'Bold', 'Epic'
-#     ]
-#     nouns = [
-#         'Falcons', 'Strikers', 'Wolves', 'Warriors', 'Tigers',
-#         'Panthers', 'Dragons', 'Sharks', 'Knights', 'Raiders'
-#     ]
-#     return f"{random.choice(adjectives)} {random.choice(nouns)}"
-
-
 # Route to create a community
 @app.route('/create_community', methods=['POST'])
 def create_community():
@@ -291,7 +254,11 @@ def create_community():
     sport = data.get('sport')
     max_players = int(data.get('max_players', 12))
     turf_id = int(data.get('turf_id'))
-    owner_id = int(data.get('owner_id'))
+    owner_id = session.get('user_id')  
+
+    if not owner_id:
+        return jsonify({'error': 'User is not logged in.'}), 401  # Unauthorized if no owner_id
+
     status = data.get('status', 'active')
 
     try:
@@ -304,7 +271,7 @@ def create_community():
             sport=sport,
             max_players=max_players,
             turf_id=turf_id,
-            owner_id=owner_id,
+            owner_id=owner_id, 
             status=status
         )
 
@@ -317,6 +284,7 @@ def create_community():
         print("Error occurred during community creation:")
         print(traceback.format_exc()) 
         return jsonify({'error': str(e)}), 500
+
     
 
 # Route for Joining Community
