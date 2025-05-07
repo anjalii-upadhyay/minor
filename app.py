@@ -389,6 +389,18 @@ def player_dashboard():
     return render_template('player_dashboard.html', turfs=turfs)
 
 
+@app.route('/my_communities')
+@login_required
+def my_communities():
+    user_id = session['user_id']
+    if not user_id:
+        flash("You need to log in first!", 'warning')
+        return redirect(url_for('login'))
+    
+    communities = Community.query.filter_by(owner_id=user_id).all()  # Assuming a Community model
+    return render_template('my_communities.html', my_communities=communities)
+
+
 # Database creation logic
 if __name__ == '__main__':
     with app.app_context():

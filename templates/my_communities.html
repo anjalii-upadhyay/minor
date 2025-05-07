@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Communities</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Reuse your existing styles, or define new styles here if needed */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1c1c1c;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .header {
+            background-color: rgba(56, 142, 60, 0.598);
+            color: white;
+            padding: 10px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            height: 40px;
+            backdrop-filter: blur(8px);
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #2e7d32;
+            color: white;
+            height: calc(100vh - 60px);
+            padding: 20px;
+            box-sizing: border-box;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            background-color: rgba(255, 255, 255, 0.05);
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(5px);
+        }
+
+        .content {
+            margin-left: 250px;
+            padding-top: 60px;
+        }
+
+        h1 {
+            color: #a5d6a7;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #b2f2bb;
+            margin-bottom: 15px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background-color: #2b2b2b;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+            padding: 20px;
+            color: #e0f2f1;
+            border-left: 5px solid #81c784;
+        }
+
+        strong {
+            font-size: 20px;
+            color: #aed581;
+        }
+
+        a.btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        a.btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo"><img class="squadUp-logo" src="/static/squadUp-logo.png" alt="Squad Up Logo"></div>
+    </div>
+
+    <div class="sidebar">
+        <h2>Sports Portal</h2>
+        <a href="{{ url_for('player_dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('join_community') }}">Join Community</a>
+        <a href="{{ url_for('my_communities') }}">My Communities</a>
+        <a href="#">History</a>
+        <a href="#">Notifications</a>
+        <a href="#">Messages</a>
+        <a href="#">Favourites</a>
+        <a href="#">Help & Support</a>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+
+    <div class="content">
+        <h1>My Communities</h1>
+
+        <div class="section">
+            <h2>Your Created Communities</h2>
+            <ul>
+                {% for community in my_communities %}
+                <li>
+                    <strong>{{ community.name }}</strong><br>
+                    Sport: {{ community.sport }}<br>
+                    Members: {{ community.members_count }}<br>
+                    Turf: {{ community.turf_name }}<br>
+                    <a href="{{ url_for('view_community', community_id=community.id) }}" class="btn">View Details</a>
+                </li>
+                {% endfor %}
+            </ul>
+
+            {% if my_communities|length == 0 %}
+            <p>You haven't created any communities yet. <a href="{{ url_for('create_community') }}" class="btn">Create One</a></p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
