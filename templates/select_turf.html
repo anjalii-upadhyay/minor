@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Select a Turf</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='join_community.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -187,100 +189,57 @@
             background-color: #0056b3;
         }
 
-        .carousel-container {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            margin: 20px 0;
-            padding: 10px;
-        }
-
-        .carousel {
-            display: flex;
+        .communities {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 20px;
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            padding-bottom: 10px;
+            padding: 20px;
         }
 
-        .carousel::-webkit-scrollbar {
-            height: 8px;
+        .community-card {
+            background-color: #a8a8a8;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            transition: box-shadow 0.2s;
         }
 
-        .carousel::-webkit-scrollbar-thumb {
-            background-color: #ccc;
-            border-radius: 4px;
+        .community-card:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
         }
 
-        .carousel-item {
-            min-width: 300px;
-            max-width: 300px;
-            background-color: #f0fff0;
-            border: 2px solid #00a859;
-            border-radius: 15px;
-            padding: 15px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 6px rgba(0, 168, 89, 0.2);
-            transition: transform 0.3s ease;
+        .community-card h3 {
+            margin-top: 0;
+            color: #2c3e50;
         }
 
-        .carousel-item:hover {
-            transform: scale(1.05);
-        }
-
-        .carousel-item h3 {
-            color: #006b3c;
-            font-size: 1.4rem;
-            margin-bottom: 8px;
-        }
-
-        .carousel-item p {
+        .community-card p strong {
             margin: 5px 0;
-            font-size: 0.95rem;
+            color: #3e3f3c;
         }
 
-        .btn {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #00a859;
-            color: #fff;
+        .community-card form {
+            margin-top: 15px;
+        }
+
+        .community-card button {
+            padding: 8px 16px;
+            background-color: #4a90e2;
+            color: white;
             border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: bold;
+            border-radius: 6px;
             cursor: pointer;
-            transition: background 0.3s ease;
+            transition: background-color 0.3s ease;
         }
 
-        .btn:hover {
-            background-color: #007944;
+        .community-card button:hover {
+            background-color: #357ab8;
         }
 
-        .carousel-control {
-            position: absolute;
-            top: 45%;
-            transform: translateY(-50%);
-            background-color: rgba(0, 168, 89, 0.8);
-            color: #fff;
-            border: none;
-            padding: 12px;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 2;
-            font-size: 20px;
-        }
-
-        .carousel-control.prev {
-            left: 0;
-        }
-
-        .carousel-control.next {
-            right: 0;
-        }
     </style>
 </head>
 <body>
+
     <div class="header">
         <div class="logo"><img class="squadUp-logo" src="/static/squadUp-logo.png" alt="Squad Up Logo"></div>
         <div class="search-container">
@@ -300,87 +259,30 @@
         <a href="{{ url_for('select_turf_to_book') }}">Book a Turf</a>
         <a href="{{ url_for('my_communities') }}">My Communities</a>
         <a href="#">History</a>
-        <a href="{{ url_for('notifications') }}">Notifications</a>
+        <a href="#">Notifications</a>
         <a href="#">Messages</a>
         <a href="#">Favourites</a>
-        <a href="{{ url_for('help_and_support') }}">Help & Support</a>
+        <a href="#">Help & Support</a>
         <a href="{{ url_for('logout') }}">Logout</a>
     </div>
 
-    <div class="main" id="main">
-        <div class="content">
-            <h1>Welcome to your Player Dashboard</h1>
-
-            <div class="section">
-                <h2>Available Turfs</h2>
-                <ul>
-                    {% for turf in turfs %}
-                    <li>
-                        <strong>{{ turf.name }}</strong><br>
-                        Location: {{ turf.location }}<br>
-                        Price per Hour: ₹{{ turf.price_per_hour }}<br>
-                        <a href="{{ url_for('book_turf', turf_id=turf.id) }}" class="btn">Book this Turf</a>
-                    </li>
-                    {% endfor %}
-                </ul>
-
-                {% if turfs|length == 0 %}
-                <p>No turfs available right now. Please check back later.</p>
-                {% endif %}
+    <!-- Main Content -->
+    <div class="main">
+        <div class="communities">
+            {% for turf in turfs %}
+            <div class="community-card">
+                <h3>{{ turf.name }}</h3>
+                <p><strong>Location:</strong> {{ turf.location }}</p>
+                <p><strong>Price per hour:</strong> ₹{{ turf.price_per_hour }}</p>
+                <form method="GET" action="{{ url_for('book_turf', turf_id=turf.id) }}">
+                    <button type="submit">Book Now</button>
+                </form>
             </div>
-
-            <div class="section">
-                <h2>Available Communities</h2>
-                <div class="carousel-container">
-                    <div class="carousel" id="community-carousel">
-                        {% for community in communities %}
-                            <div class="community-card">
-                                <h3>{{ community.team_name }}</h3>
-                                <p><strong>Sport:</strong> {{ community.sport }}</p>
-                                <p><strong>Players:</strong> {{ community.max_players }}</p>
-                                <form method="POST" action="{{ url_for('send_join_request') }}">
-                                    <input type="hidden" name="community_id" value="{{ community.id }}">
-                                    <button type="submit">Join</button>
-                                </form>            
-                            </div>
-                        {% endfor %}
-                    </div>
-                    <button class="carousel-control prev" onclick="scrollCarousel(-1)">&#10094;</button>
-                    <button class="carousel-control next" onclick="scrollCarousel(1)">&#10095;</button>
-                </div>
-                {% if communities|length == 0 %}
-                <p>No communities available right now. Please check back later.</p>
-                {% endif %}
-            </div>
-            
-            
-
-            <div class="section">
-                <h2>Closest to You</h2>
-                <!-- Placeholder for location-based recommendations -->
-            </div>
-
-            <div class="section">
-                <h2>Based on Your Recent Activity</h2>
-                <!-- Placeholder for recent activity-based recommendations -->
-            </div>
-            
-        </div>
+            {% else %}
+            <p>No turfs available.</p>
+            {% endfor %}
+        </div>        
     </div>
 
-    <script>
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const main = document.getElementById('main');
-            sidebar.classList.toggle('collapsed');
-            main.classList.toggle('collapsed');
-        }
-
-        function scrollCarousel(direction) {
-        const container = document.getElementById('community-carousel');
-        const scrollAmount = 300; // adjust as needed
-        container.scrollBy({ left: direction * scrollAmount, behavior: 'smooth' });
-    }
-    </script>
 </body>
 </html>

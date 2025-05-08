@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from functools import wraps
 from datetime import datetime
-from models import db, User, Turf, Slot, Community, JoinRequest
+from models import CommunityPlayers, db, User, Turf, Slot, Community, JoinRequest
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -87,16 +87,22 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
+        is_owner = 'is_owner' in request.form  # Checkbox returns 'on' if ticked, otherwise key not present
+
+        # Do your actual authentication logic here
         user = User.query.filter_by(email=email).first()
 
         if user and user.password == password:
             session['user_id'] = user.id
-            session['is_owner'] = user.is_owner
-            flash("Logged in successfully!", "success")
-            return redirect(url_for('player_dashboard'))  # Always go to dashboard
+            session['is_owner'] = is_owner
 
-        flash("Invalid email or password.", "warning")
-
+            if is_owner:
+                return redirect(url_for('owner_dashboard'))
+            else:
+                return redirect(url_for('player_dashboard'))  # Or whatever your player dashboard route is
+        else:
+            flash('Invalid credentials.')
+            return render_template('login.html')
     return render_template('login.html')
 
 
@@ -120,9 +126,6 @@ def owner_dashboard():
     owner_id = session['user_id']
     turfs = Turf.query.filter_by(owner_id=owner_id).all()
     return render_template('owner_dashboard.html', turfs=turfs)
-
-    # turfs = Turf.query.filter_by(owner_id=owner_id).all()
-    # return render_template('owner_dashboard.html', turfs=turfs)
 
 
 @app.route('/owner/add_turf', methods=['GET', 'POST'])
@@ -225,6 +228,16 @@ def book_turf(turf_id):
     return render_template('book_turf.html', turf=turf, slots=slots)
 
 
+@app.route('/player/book')
+def select_turf_to_book():
+    if not is_logged_in() or session.get('is_owner'):
+        flash('Unauthorized access!', 'danger')
+        return redirect(url_for('login'))
+
+    turfs = Turf.query.all()
+    return render_template('select_turf.html', turfs=turfs)
+
+
 @app.route('/player/confirmation')
 def booking_confirmation():
     if 'confirmation' not in session:
@@ -297,6 +310,7 @@ def join_community():
 @app.route('/send-join-request', methods=['POST'])
 def send_join_request():
     user_id = session.get('user_id')
+
     if not user_id:
         print("User not logged in. Redirecting to login.")
         session['page_last_visited_url'] = request.referrer or url_for('join_community')
@@ -338,7 +352,6 @@ def get_communities():
         return jsonify({"error": str(e)}), 500
 
 
-# Store Last Visited Webpage
 @app.before_request
 def page_last_visited():
     excluded_routes = ['login', 'logout', 'static', 'register']
@@ -346,14 +359,21 @@ def page_last_visited():
         session['page_last_visited_url'] = request.path
 
 
-@app.route('/player/dashboard')
+@app.route('/player-dashboard')
 def player_dashboard():
-    if 'user_id' not in session:
-        flash("Please login first.", "info")
+    user_id = session.get('user_id')
+    if not user_id:
         return redirect(url_for('login'))
 
-    turfs = Turf.query.all()  # Fetch all turfs from DB
-    return render_template('player_dashboard.html', turfs=turfs)
+
+    turfs = Turf.query.all()
+    my_communities = Community.query.all()
+    my_community_ids = [c.id for c in my_communities]
+
+    # Get join requests for those communities
+    join_requests = JoinRequest.query.filter(JoinRequest.community_id.in_(my_community_ids)).all()
+
+    return render_template('player_dashboard.html', join_requests=join_requests, turfs=turfs)
 
 
 @app.route('/my_communities')
@@ -366,6 +386,92 @@ def my_communities():
     
     communities = Community.query.filter_by(owner_id=user_id).all()  # Assuming a Community model
     return render_template('my_communities.html', my_communities=communities)
+
+
+community_requests_bp = Blueprint('community_requests', __name__)
+@community_requests_bp.route('/community/request/respond', methods=['POST'])
+@login_required
+def respond_to_join_request():
+    data = request.get_json()
+    request_id = data.get('request_id')
+    action = data.get('action')  # 'accept' or 'reject'
+
+    join_request = JoinRequest.query.get(request_id)
+    if not join_request:
+        return jsonify({'error': 'Join request not found'}), 404
+
+    community = join_request.community
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'error': 'Not logged in'}), 401
+
+    if community.owner_id != user_id:
+        return jsonify({'error': 'Unauthorized. You are not the owner of this community.'}), 403
+    
+    if join_request.status != 'pending':
+        return jsonify({'error': 'Request has already been responded to.'}), 400
+
+    if action == 'accept':
+        join_request.status = 'approved'
+        
+        community_player = CommunityPlayers.query.filter_by(user_id=join_request.user_id, community_id=community.id).first()
+        if community_player:
+            community_player.status = 'approved'
+
+        # Optional: Send a notification about the approval (or any other way you want to notify the user)
+        # Here, just returning a message in the response, but you could also send an email or push notification
+        return jsonify({'message': 'Join request accepted, user added to the community.'}), 200
+    
+    elif action == 'reject':
+        join_request.status = 'rejected'
+
+        return jsonify({'message': 'Join request rejected.'}), 200
+    
+    else:
+        return jsonify({'error': 'Invalid action. Use "accept" or "reject".'}), 400
+    
+    db.session.commit()  # Save the changes to the database
+
+
+@app.route('/notifications', methods=['GET'])
+@login_required
+def notifications():
+    user_id = session.get('user_id')  # Get the user ID from session
+    if not user_id:
+        flash("You need to log in first!", 'warning')
+        return redirect(url_for('login'))
+
+    my_communities = Community.query.filter_by(owner_id=user_id).all()
+    my_community_ids = [c.id for c in my_communities]
+
+    # Retrieve the pending join requests for the logged-in user
+    join_requests = JoinRequest.query.filter(JoinRequest.community_id.in_(my_community_ids)).all()
+    
+    return render_template('notifications.html', join_requests=join_requests)
+
+
+@app.route('/approve_request/<int:request_id>')
+def approve_request(request_id):
+    join_request = JoinRequest.query.get(request_id)
+    join_request.status = 'accepted'
+    db.session.commit()
+
+    flash("Join request accepted!", 'success')
+    return redirect(url_for('my_notifications'))
+
+@app.route('/reject_request/<int:request_id>')
+def reject_request(request_id):
+    join_request = JoinRequest.query.get(request_id)
+    join_request.status = 'rejected'
+    db.session.commit()
+
+    flash("Join request rejected.", 'danger')
+    return redirect(url_for('my_notifications'))
+
+
+@app.route('/help_and_support')
+def help_and_support():
+    return render_template('help_and_support.html')
 
 
 # Database creation logic
