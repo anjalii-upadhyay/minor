@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 import sqlite3
 import random
 import traceback
+import pytz
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from functools import wraps
@@ -12,6 +13,11 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///turf_booking.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# user_timezone = pytz.timezone('Asia/Kolkata')  # Replace with user's timezone or desired timezone
+# utc_time = req.created_at.replace(tzinfo=pytz.utc)  # If it's stored in UTC
+# local_time = utc_time.astimezone(user_timezone)
+# req.created_at = local_time.strftime('%Y-%m-%d %H:%M')
 
 db.init_app(app)  # Initialize the database with the app
 migrate = Migrate(app, db)
@@ -323,7 +329,7 @@ def send_join_request():
     if existing_request:
         flash("You have already sent a request to this community.", "warning")
     else:
-        new_request = JoinRequest(user_id=user_id, community_id=community_id, status='pending')
+        new_request = JoinRequest(user_id=user_id, community_id=community_id, status='pending', created_at=datetime.utcnow())
         db.session.add(new_request)
         db.session.commit()
         flash("Join request sent successfully!", "success")
@@ -436,19 +442,64 @@ def respond_to_join_request():
 @app.route('/notifications', methods=['GET'])
 @login_required
 def notifications():
-    user_id = session.get('user_id')  # Get the user ID from session
-    if not user_id:
+
+    # print(f"User ID: {user_id}")
+    # print(f"My Communities: {my_communities}")
+    # print(f"Join Requests: {join_requests}")
+
+    owner_id = session.get('user_id')
+    if not owner_id:
         flash("You need to log in first!", 'warning')
         return redirect(url_for('login'))
 
-    my_communities = Community.query.filter_by(owner_id=user_id).all()
-    my_community_ids = [c.id for c in my_communities]
+    # my_communities = Community.query.filter_by(owner_id=user_id).all()
+    owned_communities = Community.query.filter_by(owner_id=owner_id).all()
+
+    my_community_ids = [c.id for c in owned_communities]
 
     # Retrieve the pending join requests for the logged-in user
-    join_requests = JoinRequest.query.filter(JoinRequest.community_id.in_(my_community_ids)).all()
+    requests = JoinRequest.query.filter(JoinRequest.community_id.in_(my_community_ids)).order_by(JoinRequest.created_at.desc()).all()
     
-    return render_template('notifications.html', join_requests=join_requests)
+    return render_template('notifications.html', requests=requests)
 
+
+@app.route('/handle_join_request/<int:request_id>/<action>', methods=['POST'])
+def handle_join_request(request_id, action):
+    join_request = JoinRequest.query.get_or_404(request_id)
+
+    if join_request.status != 'pending':
+        flash('This join request has already been processed.', 'info')
+        return redirect(url_for('notifications'))  # adjust if your notification route is named differently
+
+    if action == 'accept':
+        # Mark as accepted
+        join_request.status = 'accepted'
+
+        # Add to CommunityPlayers
+        existing = CommunityPlayers.query.filter_by(
+            community_id=join_request.community_id,
+            user_id=join_request.user_id
+        ).first()
+
+        if not existing:
+            new_member = CommunityPlayers(
+                community_id=join_request.community_id,
+                user_id=join_request.user_id
+            )
+            db.session.add(new_member)
+
+        flash('Join request accepted and user added to the community.', 'success')
+
+    elif action == 'reject':
+        join_request.status = 'rejected'
+        flash('Join request rejected.', 'warning')
+
+    else:
+        flash('Invalid action.', 'danger')
+        return redirect(url_for('notifications'))
+
+    db.session.commit()
+    return redirect(url_for('notifications'))
 
 @app.route('/approve_request/<int:request_id>')
 def approve_request(request_id):
@@ -457,7 +508,7 @@ def approve_request(request_id):
     db.session.commit()
 
     flash("Join request accepted!", 'success')
-    return redirect(url_for('my_notifications'))
+    return redirect(url_for('notifications'))
 
 @app.route('/reject_request/<int:request_id>')
 def reject_request(request_id):
@@ -466,7 +517,7 @@ def reject_request(request_id):
     db.session.commit()
 
     flash("Join request rejected.", 'danger')
-    return redirect(url_for('my_notifications'))
+    return redirect(url_for('notifications'))
 
 
 @app.route('/help_and_support')

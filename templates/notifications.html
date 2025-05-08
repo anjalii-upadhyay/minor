@@ -125,6 +125,83 @@
             font-size: 20px;
             cursor: pointer;
         }
+
+        .main {
+            margin-left: 250px;
+            padding: 60px 30px;
+        }
+
+        .notifications-tab {
+            background-color: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .notifications-tab h3 {
+            font-size: 24px;
+            color: #90ee90;
+            margin-bottom: 20px;
+        }
+
+        /* Table styling */
+        .notifications-tab table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #1f1f1f;
+            border: 1px solid #444;
+        }
+
+        .notifications-tab th, .notifications-tab td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #444;
+            text-align: left;
+            color: #fff;
+        }
+
+        .notifications-tab th {
+            background-color: #388e3c;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .notifications-tab tr:hover {
+            background-color: #333;
+        }
+
+        /* Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .accept-btn, .reject-btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .accept-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .accept-btn:hover {
+            background-color: #45a049;
+        }
+
+        .reject-btn {
+            background-color: #e53935;
+            color: white;
+        }
+
+        .reject-btn:hover {
+            background-color: #d32f2f;
+        }
     </style>
 </head>
 <body>
@@ -148,18 +225,43 @@
     <div class="main">
         <div class="notifications-tab">
             <h3>Join Requests</h3>
-            <ul>
-                {% for request in join_requests %}
-                    <li class="notification-item">
-                        <strong>Player ID: {{ request.user_id }}</strong>
-                        <p>Status: {{ request.status }}</p>
-                        {% if request.status == 'pending' %}
-                            <a href="{{ url_for('approve_request', request_id=request.id) }}" class="btn btn-success">Approve</a>
-                            <a href="{{ url_for('reject_request', request_id=request.id) }}" class="btn btn-danger">Reject</a>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-            </ul>
+{% if requests %}
+    <table>
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Status</th>
+                <th>Sent At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for req in requests %}
+            <tr>
+                <td>{{ req.user_id }}</td>
+                <td>{{ req.status }}</td>
+                <td>{{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    {% if req.status == 'pending' %}
+                        <div class="action-buttons">
+                            <form method="POST" action="{{ url_for('handle_join_request', request_id=req.id, action='accept') }}">
+                                <button type="submit" class="accept-btn">Accept</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('handle_join_request', request_id=req.id, action='reject') }}">
+                                <button type="submit" class="reject-btn">Reject</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <span style="opacity: 0.7;">No actions</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No join requests yet.</p>
+{% endif %}
         </div>
     </div>
     <script>
