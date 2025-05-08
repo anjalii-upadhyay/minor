@@ -30,7 +30,7 @@
             backdrop-filter: blur(8px);
         }
 
-        .header .logo .squadUp-logo{
+        .header img{
             width: 70%;
         }
 
@@ -282,7 +282,7 @@
 </head>
 <body>
     <div class="header">
-        <div class="logo"><img class="squadUp-logo" src="/static/squadUp-logo.png" alt="Squad Up Logo"></div>
+        <a href="{{ url_for('player_dashboard') }}"><img src="/static/squadUp-logo.png" alt="Squad Up Logo"></a>
         <div class="search-container">
             <input type="text" placeholder="Search...">
         </div>

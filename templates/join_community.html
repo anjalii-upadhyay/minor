@@ -55,6 +55,10 @@
             margin-left: -20%;
         }
 
+        .header img {
+            width: 70%;
+        }
+
         .icon-button {
             background-color: transparent;
             border: none;
@@ -290,7 +294,7 @@
 <body>
 
     <div class="header">
-        <div class="logo"><img class="squadUp-logo" src="/static/squadUp-logo.png" alt="Squad Up Logo"></div>
+        <a href="{{ url_for('index') }}"><img src="/static/squadUp-logo.png" alt="Squad Up Logo"></a>
         <div class="search-container">
             <input type="text" placeholder="Search...">
         </div>
@@ -308,10 +312,10 @@
         <a href="{{ url_for('select_turf_to_book') }}">Book a Turf</a>
         <a href="{{ url_for('my_communities') }}">My Communities</a>
         <a href="#">History</a>
-        <a href="#">Notifications</a>
+        <a href="{{ url_for('notifications') }}">Notifications</a>
         <a href="#">Messages</a>
         <a href="#">Favourites</a>
-        <a href="#">Help & Support</a>
+        <a href="{{ url_for('help_and_support') }}">Help & Support</a>
         <a href="{{ url_for('logout') }}">Logout</a>
     </div>
 

@@ -56,6 +56,10 @@
             margin-left: -20%;
         }
 
+        .header img {
+            width: 70%;
+        }
+
         .icon-button {
             background-color: transparent;
             border: none;
@@ -206,8 +210,19 @@
 </head>
 <body>
 
-    <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="header">
+        <a href="{{ url_for('index') }}"><img src="/static/squadUp-logo.png" alt="Squad Up Logo"></a>
+        <div class="search-container">
+            <input type="text" placeholder="Search...">
+        </div>
+        <div class="icons">
+            <button class="icon-button" title="Filters"><i class="fas fa-filter"></i></button>
+            <button class="icon-button" title="Profile"><i class="fas fa-user-circle"></i></button>
+        </div>
+    </div>
+
+    <div class="sidebar" id="sidebar">
+        <button class="toggle-button" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
         <h2>Sports Portal</h2>
         <a href="{{ url_for('player_dashboard') }}">Dashboard</a>
         <a href="{{ url_for('join_community') }}">Join Community</a>
